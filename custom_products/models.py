@@ -20,7 +20,6 @@ STATE_CHOICES = (
 USER_TYPE_CHOICES = (
     ('shop', 'Магазин'),
     ('buyer', 'Покупатель'),
-
 )
 
 
@@ -75,7 +74,7 @@ class User(AbstractUser):
     )
     is_active = models.BooleanField(
         _('active'),
-        default=False,
+        default=True,
         help_text=_(
             'Designates whether this user should be treated as active. '
             'Unselect this instead of deleting accounts.'
@@ -174,6 +173,7 @@ class ProductInfo(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['product', 'shop', 'external_id'], name='unique_product_info'),
         ]
+        ordering = ('-model',)
 
 
 class Parameter(models.Model):
@@ -232,7 +232,7 @@ class Order(models.Model):
     user = models.ForeignKey(User, verbose_name='Пользователь',
                              related_name='orders', blank=True,
                              on_delete=models.CASCADE)
-    dt = models.DateTimeField(auto_now_add=True)
+    dt = models.DateTimeField(auto_now_add=True, verbose_name='Дата')
     state = models.CharField(verbose_name='Статус', choices=STATE_CHOICES, max_length=15)
     contact = models.ForeignKey(Contact, verbose_name='Контакт',
                                 blank=True, null=True,
@@ -277,7 +277,6 @@ class ConfirmEmailToken(models.Model):
     def generate_key():
         return get_token_generator().generate_token()
 
-    objects = Manager()
     user = models.ForeignKey(
         User,
         related_name='confirm_email_tokens',
@@ -289,6 +288,7 @@ class ConfirmEmailToken(models.Model):
         auto_now_add=True,
         verbose_name=_("When was this token generated")
     )
+    objects = Manager()
 
     key = models.CharField(
         _("Key"),

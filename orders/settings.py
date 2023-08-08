@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'custom_products',
     'django_rest_passwordreset',
     'rest_framework',
+    'django_filters',
+    'rest_framework.authtoken',
 
 ]
 
@@ -147,3 +149,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+}

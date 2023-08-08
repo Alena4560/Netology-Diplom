@@ -1,31 +1,39 @@
 from distutils.util import strtobool
 
+
 from rest_framework import status
-# from django.urls import reverse
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
-# from django.core.validators import URLValidator
+
+from custom_products.filters import OrderFilter, CategoryFilter, ShopFilter, ProductFilter
+from django_filters import rest_framework as filters
 from rest_framework.parsers import MultiPartParser
+from rest_framework.authtoken.models import Token
 import yaml
 from django.db import IntegrityError
 from django.db.models import Q, Sum, F
 from django.http import JsonResponse
-# from requests import get
 from django.db import transaction
 from rest_framework.exceptions import NotFound
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from ujson import loads as load_json
-# from yaml import load as load_yaml, Loader
 
 from custom_products.models import Shop, Category, Product, ProductInfo, Parameter, ProductParameter, Order, OrderItem, \
-    Contact, ConfirmEmailToken
+    Contact, ConfirmEmailToken, USER_TYPE_CHOICES
 from custom_products.serializers import UserSerializer, CategorySerializer, ShopSerializer, ProductInfoSerializer, \
     OrderItemSerializer, OrderSerializer, ContactSerializer, ConfirmEmailTokenSerializer
 from custom_products.signals import new_user_registered, new_order, updated_order
+
+
+class CustomPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
 
 class LoginAccount(APIView):
@@ -34,12 +42,18 @@ class LoginAccount(APIView):
     """
     @staticmethod
     def post(request):
-        if {'email', 'password'} <= request.data:
+        required_keys = {'email', 'password'}
+        if required_keys.issubset(request.data.keys()):
             user = authenticate(request, username=request.data['email'], password=request.data['password'])
 
             if user is not None and user.is_active:
-                token, _ = ConfirmEmailToken.objects.get_or_create(user=user)
-                return Response({'Status': True, 'Token': token.key}, status=status.HTTP_200_OK)
+                token, _ = Token.objects.get_or_create(user=user)
+                base_url = request.build_absolute_uri('/')
+                order_url = f'{base_url}custom_products/order/'
+                return Response({'Status': True,
+                                 'Token': token.key,
+                                 'message': 'Вы успешно авторизованы. Теперь вы можете сделать заказ.',
+                                 'order_url': order_url}, status=status.HTTP_200_OK)
 
             return Response({'Status': False, 'Errors': 'Неверный email или пароль'}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -85,42 +99,47 @@ class CategoryView(ListAPIView):
     """
     Класс для просмотра категорий
     """
-    queryset = Category.objects.all()
+
     serializer_class = CategorySerializer
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_class = CategoryFilter
+    queryset = Category.objects.all()
+    pagination_class = CustomPagination
 
 
 class ShopView(ListAPIView):
     """
     Класс для просмотра списка магазинов
     """
-    queryset = Shop.objects.filter(state=True)
     serializer_class = ShopSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_class = ShopFilter
+    queryset = Shop.objects.filter(state=True)
+    pagination_class = CustomPagination
 
 
-class ProductInfoView(APIView):
+class ProductInfoView(ListAPIView):
     """
     Класс для поиска товаров
     """
 
+    queryset = ProductInfo.objects.filter(shop__state=True)
+    serializer_class = ProductInfoSerializer
+    filterset_class = ProductFilter
+    pagination_class = CustomPagination
+
     def get_queryset(self):
-        query = Q(shop__state=True)
+        queryset = super().get_queryset()
         shop_id = self.request.query_params.get('shop_id')
         category_id = self.request.query_params.get('category_id')
 
         if shop_id:
-            query &= Q(shop_id=shop_id)
+            queryset = queryset.filter(shop_id=shop_id)
 
         if category_id:
-            query &= Q(product__category_id=category_id)
+            queryset = queryset.filter(product__category_id=category_id)
 
-        return ProductInfo.objects.filter(query).select_related(
-            'shop', 'product__category').prefetch_related(
-            'product_parameters__parameter').distinct()
-
-    def get(self, request):
-        queryset = self.get_queryset()
-        serializer = ProductInfoSerializer(queryset, many=True)
-        return Response(serializer.data)
+        return queryset.select_related('shop', 'product__category').prefetch_related('product_parameters__parameter')
 
 
 class BasketView(APIView):
@@ -225,6 +244,11 @@ class OrderView(APIView):
     """
     Класс для получения и размещения заказов пользователями
     """
+
+    serializer_class = OrderSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_class = OrderFilter
+    pagination_class = CustomPagination
 
     def get_queryset(self):
         return Order.objects.filter(
@@ -382,7 +406,7 @@ class ConfirmAccount(APIView):
 
 class AccountDetails(APIView):
     """
-    Класс для работы данными пользователя
+    Класс для работы с данными пользователя
     """
     permission_classes = [IsAuthenticated]
 
@@ -406,6 +430,13 @@ class AccountDetails(APIView):
         user_serializer = UserSerializer(user, data=request.data, partial=True)
         if user_serializer.is_valid():
             user_serializer.save()
+
+            # Проверка на изменение поля "type"
+            if 'type' in request.data:
+                new_type = request.data['type']
+                if new_type in dict(USER_TYPE_CHOICES):
+                    user.type = new_type
+                    user.save()
             return Response({'Status': True})
         else:
             return Response({'Status': False, 'Errors': user_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

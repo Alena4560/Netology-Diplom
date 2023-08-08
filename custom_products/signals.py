@@ -26,9 +26,9 @@ def password_reset_token_created(sender, instance, reset_password_token, **kwarg
 
     msg = EmailMultiAlternatives(
         # title:
-        f"Password Reset Token for {reset_password_token.user}",
+        f'Токен для сброса пароля для пользователя {reset_password_token.user}',
         # message:
-        reset_password_token.key,
+        f'Токен для сброса пароля: {reset_password_token.key}',
         # from:
         settings.EMAIL_HOST_USER,
         # to:
@@ -47,9 +47,9 @@ def new_user_registered_signal(user_id, **kwargs):
 
     msg = EmailMultiAlternatives(
         # title:
-        f"Password Reset Token for {token.user.email}",
+        f'Токен подтверждения регистрации для пользователя {token.user.email}',
         # message:
-        token.key,
+        f'Токен подтверждения регистрации: {token.key}',
         # from:
         settings.EMAIL_HOST_USER,
         # to:
@@ -68,8 +68,8 @@ def new_order_signal(sender, admin_emails, **kwargs):
 
     # Отправка письма на email клиента (подтверждение приема заказа)
     send_mail(
-        f"Подтверждение заказа",
-        "Ваш заказ был успешно размещен.",
+        f'Подтверждение заказа',
+        'Ваш заказ был успешно размещен.',
         settings.EMAIL_HOST_USER,
         [user_email],
         fail_silently=False,
@@ -77,8 +77,8 @@ def new_order_signal(sender, admin_emails, **kwargs):
 
     # Отправка письма на email администратора(ов) (для исполнения заказа)
     send_mail(
-        f"Заказ от пользователя {user_email}",
-        "У вас есть новый заказ для исполнения.",
+        f'Заказ от пользователя {user_email}',
+        'У вас есть новый заказ для исполнения.',
         settings.EMAIL_HOST_USER,
         admin_emails,
         fail_silently=False,
@@ -95,8 +95,8 @@ def updated_order_signal(sender, admin_emails, **kwargs):
 
     # Отправка письма на email клиента (подтверждение приема заказа)
     send_mail(
-        f"Обновление заказа",
-        "Ваш заказ был обновлен.",
+        f'Обновление заказа',
+        'Ваш заказ был обновлен.',
         settings.EMAIL_HOST_USER,
         [user_email],
         fail_silently=False,
@@ -104,8 +104,8 @@ def updated_order_signal(sender, admin_emails, **kwargs):
 
     # Отправка письма на email администратора(ов) (для исполнения заказа)
     send_mail(
-        f"Изменение заказа от пользователя {user_email}",
-        "У вас есть измененный заказ для исполнения.",
+        f'Изменение заказа от пользователя {user_email}',
+        'У вас есть измененный заказ для исполнения.',
         settings.EMAIL_HOST_USER,
         admin_emails,
         fail_silently=False,
