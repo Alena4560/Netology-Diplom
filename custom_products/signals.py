@@ -1,10 +1,10 @@
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.mail import EmailMultiAlternatives
 from django.dispatch import receiver, Signal
 from django_rest_passwordreset.signals import reset_password_token_created
 from django.core.mail import send_mail
-
-from custom_products.models import ConfirmEmailToken
+from rest_framework.authtoken.models import Token
 
 new_user_registered = Signal()
 new_order = Signal()
@@ -38,35 +38,34 @@ def password_reset_token_created(sender, instance, reset_password_token, **kwarg
 
 
 @receiver(new_user_registered)
-def new_user_registered_signal(user_id, **kwargs):
+def new_user_registered_signal(sender, user_id, **kwargs):
     """
-    Отправляем письмо с подтверждением почты
+    Отправляем письмо с подтверждением почты и создаем токен
     """
-    # send an e-mail to the user
-    token, _ = ConfirmEmailToken.objects.get_or_create(user_id=user_id)
+    user = get_user_model().objects.get(pk=user_id)
+    token = Token.objects.create(user=user)
+    token.save()
 
     msg = EmailMultiAlternatives(
         # title:
-        f'Токен подтверждения регистрации для пользователя {token.user.email}',
+        f'Токен для пользователя {user.email}',
         # message:
-        f'Токен подтверждения регистрации: {token.key}',
+        f'Токен для дальнейших авторизаций: {token.key}',
         # from:
         settings.EMAIL_HOST_USER,
         # to:
-        [token.user.email]
+        [user.email]
     )
     msg.send()
 
 
 @receiver(new_order)
-def new_order_signal(sender, admin_emails, **kwargs):
+def new_order_signal(sender, user_id, user_email, admin_emails, **kwargs):
     """
     Отправляем письмо при изменении статуса заказа
     """
-    # Получаем значение user_email из атрибутов сигнала
-    user_email = sender.user_email
+    user_email = user_email
 
-    # Отправка письма на email клиента (подтверждение приема заказа)
     send_mail(
         f'Подтверждение заказа',
         'Ваш заказ был успешно размещен.',
@@ -75,7 +74,6 @@ def new_order_signal(sender, admin_emails, **kwargs):
         fail_silently=False,
     )
 
-    # Отправка письма на email администратора(ов) (для исполнения заказа)
     send_mail(
         f'Заказ от пользователя {user_email}',
         'У вас есть новый заказ для исполнения.',
@@ -86,14 +84,12 @@ def new_order_signal(sender, admin_emails, **kwargs):
 
 
 @receiver(updated_order)
-def updated_order_signal(sender, admin_emails, **kwargs):
+def updated_order_signal(sender, user_email, admin_emails, **kwargs):
     """
     Отправляем письмо при изменении статуса заказа
     """
-    # Получаем значение user_email из атрибутов сигнала
-    user_email = sender.user_email
+    user_email = user_email
 
-    # Отправка письма на email клиента (подтверждение приема заказа)
     send_mail(
         f'Обновление заказа',
         'Ваш заказ был обновлен.',
@@ -102,7 +98,6 @@ def updated_order_signal(sender, admin_emails, **kwargs):
         fail_silently=False,
     )
 
-    # Отправка письма на email администратора(ов) (для исполнения заказа)
     send_mail(
         f'Изменение заказа от пользователя {user_email}',
         'У вас есть измененный заказ для исполнения.',

@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 from custom_products.models import User, Shop, Category, Product, ProductInfo, Parameter, ProductParameter, Order, OrderItem, \
-    Contact, ConfirmEmailToken
+    Contact
 
 
 @admin.register(User)
@@ -68,6 +68,6 @@ class ContactAdmin(admin.ModelAdmin):
     pass
 
 
-@admin.register(ConfirmEmailToken)
-class ConfirmEmailTokenAdmin(admin.ModelAdmin):
-    list_display = ('user', 'key', 'created_at',)
+# @admin.register(ConfirmEmailToken)
+# class ConfirmEmailTokenAdmin(admin.ModelAdmin):
+#     list_display = ('user', 'key', 'created_at',)

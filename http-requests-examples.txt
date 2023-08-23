@@ -1,0 +1,312 @@
+POST: Регистрация нового пользователя
+
+POST /custom_products/user/register
+Content-Type: application/json
+Body:
+{
+    "first_name": "John",
+    "last_name": "Doe",
+    "email": "john@example.com",
+    "password": "your_password",
+    "company": "Example Company",
+    "position": "Manager"
+}
+
+
+
+POST: Авторизация пользователя
+
+POST /custom_products/user/login
+Content-Type: application/json
+Body:
+{
+    "email": "user@example.com",
+    "password": "your_password"
+}
+
+
+
+POST: Запрос токена для сброса пароля
+
+POST /custom_products/user/password_reset
+Content-Type: application/json
+Body:
+{
+    "email": "user@example.com"
+}
+
+
+
+POST: Установка нового пароля после сброса
+
+POST /custom_products/user/password_reset/confirm
+Content-Type: application/json
+Body:
+{
+    "token": "<ваш_токен>",
+    "password": "your_password"
+}
+
+
+
+GET: Получение корзины пользователя
+
+GET /custom_products/basket HTTP/1.1
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Host: example.com
+
+
+
+POST: Добавление товаров в корзину
+
+POST /custom_products/basket HTTP/1.1
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Host: example.com
+Content-Type: application/json
+Body:
+{
+    "items": [
+        {
+            "name": "Product 1",
+            "quantity": 2
+        },
+        {
+            "name": "Product 2",
+            "quantity": 3
+        }
+    ]
+}
+
+
+
+DELETE: Удаление товаров из корзины
+
+DELETE /custom_products/basket HTTP/1.1
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Host: example.com
+Content-Type: application/json
+Body:
+{
+    "order_id": 1,
+    "items": ["Product 1", "Product 2"]
+}
+
+
+
+PUT: Обновление количества товаров в корзине
+
+PUT /custom_products/basket HTTP/1.1
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Host: example.com
+Content-Type: application/json
+Body:
+{
+    "items": [
+        {
+            "name": "Product 1",
+            "quantity": 5
+        },
+        {
+            "name": "Product 2",
+            "quantity": 1
+        }
+    ]
+}
+
+
+
+GET: Получение заказов пользователя
+
+GET /custom_products/order
+Headers:
+Authorization: Token <ваш_токен>
+
+
+
+POST: Размещение нового заказа
+
+POST /custom_products/order
+Headers:
+Authorization: Token <ваш_токен>
+Content-Type: application/json
+Body:
+{
+    "contact": [
+    {
+      "phone": "<номер_телефона>",
+      "city": "<название_города>",
+      "street": "<название_улицы>",
+      "house": "<номер_дома>",
+      "apartment": "<номер_квартиры>"
+    }
+    ],
+    "items": [
+        {
+            "name": "<название_товара>",
+            "quantity": <количество>
+        },
+        {
+            "name": "<название_другого_товара>",
+            "quantity": <количество>
+        }
+        ...
+    ]
+}
+
+
+
+DELETE: Удаление заказов
+
+DELETE /custom_products/order
+Headers:
+Authorization: Token <ваш_токен>
+Content-Type: application/json
+Body:
+{
+    "items": [1, 2, 3]  // Список ID заказов для удаления
+}
+
+
+
+GET: Получение подтвержденных заказов пользователя
+
+GET /custom_products/update_order
+Headers:
+Authorization: Token <ваш_токен>
+
+
+
+PUT: Обновление подтвержденного заказа
+
+PUT /custom_products/update_order
+Headers:
+Authorization: Token <ваш_токен>
+Content-Type: application/json
+Body:
+{
+    "id": <id_заказа>,
+    "contact": "<номер_телефона>",
+    "items": [
+        {
+            "name": "<название_товара>",
+            "quantity": <количество>
+        },
+        {
+            "name": "<название_другого_товара>",
+            "quantity": <количество>
+        }
+    ]
+}
+
+
+
+GET: Получение данных аккаунта пользователя
+
+GET /custom_products/user/details
+Headers:
+Authorization: Token <ваш_токен>
+
+
+
+PUT: Обновление данных аккаунта пользователя
+
+PUT /custom_products/user/details
+Headers:
+Authorization: Token <ваш_токен>
+Content-Type: application/json
+Body:
+{
+    "username": "<новое_имя_пользователя>",
+    "email": "<новый_адрес_электронной_почты>",
+    "password": "<новый_пароль>",
+    "type": "<новый_тип_пользователя>"
+}
+
+
+
+DELETE: Удаление пользователя
+
+DELETE /custom_products/user/details
+Headers:
+Authorization: Token <ваш_токен>
+
+
+
+GET: Получение текущего статуса поставщика
+
+GET /custom_products/partner/state
+Headers:
+Authorization: Token <ваш_токен>
+
+
+
+POST: Изменение текущего статуса поставщика
+
+POST /custom_products/partner/state
+Headers:
+Authorization: Token <ваш_токен>
+Content-Type: application/json
+Body:
+{
+    "state": "<новый_статус>"
+}
+
+
+
+GET: Получение заказов поставщиками
+
+GET /custom_products/partner/orders
+Headers:
+Authorization: Token <ваш_токен>
+
+
+
+GET: Получение своих контактов покупателями
+
+GET /custom_products/user/contact
+Headers:
+Authorization: Token <ваш_токен>
+
+
+
+POST: Создание нового контакта покупателя
+
+POST /custom_products/user/contact
+Headers:
+Authorization: Token <ваш_токен>
+Content-Type: application/json
+Body:
+{
+    "city": "название_города",
+    "street": "название_улицы",
+    "phone": "номер_телефона"
+}
+
+
+
+PUT: Обновление информации о контакте
+
+PUT /custom_products/user/contact
+Headers:
+Authorization: Token <ваш_токен>
+Content-Type: application/json
+Body:
+{
+    "id": 1,  // ID существующего контакта
+    "city": "название_города",
+    "street": "название_улицы",
+    "phone": "номер_телефона"
+}
+
+
+
+DELETE: Удаление контакта
+
+DELETE /custom_products/user/contact
+Headers:
+Authorization: Token <ваш_токен>
+Content-Type: application/json
+Body:
+{
+    "items": [1, 2, 3]  // Список ID контактов для удаления
+}
